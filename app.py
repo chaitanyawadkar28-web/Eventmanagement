@@ -15,9 +15,7 @@ app.secret_key = "eventease_secret_key"
 # ==========================================
 
 def get_db_connection():
-
     conn = sqlite3.connect("eventease.db")
-
     return conn
 
 
@@ -28,9 +26,7 @@ def get_db_connection():
 def init_db():
 
     conn = get_db_connection()
-
     cursor = conn.cursor()
-
 
     # ======================================
     # USERS TABLE
@@ -38,18 +34,12 @@ def init_db():
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-
             username TEXT UNIQUE NOT NULL,
-
             email TEXT UNIQUE NOT NULL,
-
             password TEXT NOT NULL
-
         )
     """)
-
 
     # ======================================
     # REVIEWS TABLE
@@ -57,23 +47,15 @@ def init_db():
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS reviews (
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-
             venue_name TEXT NOT NULL,
-
             username TEXT NOT NULL,
-
             rating INTEGER NOT NULL,
-
             review TEXT NOT NULL
-
         )
     """)
 
-
     conn.commit()
-
     conn.close()
 
 
@@ -87,14 +69,10 @@ def login():
     if request.method == "POST":
 
         username = request.form["username"]
-
         password = request.form["password"]
 
-
         conn = get_db_connection()
-
         cursor = conn.cursor()
-
 
         cursor.execute(
             """
@@ -103,15 +81,12 @@ def login():
             WHERE username = ?
             AND password = ?
             """,
-
             (username, password)
         )
-
 
         user = cursor.fetchone()
 
         conn.close()
-
 
         if user:
 
@@ -121,15 +96,12 @@ def login():
                 url_for("home")
             )
 
-
         else:
 
             return render_template(
                 "login.html",
-
                 error="Invalid username or password."
             )
-
 
     return render_template("login.html")
 
@@ -141,30 +113,36 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
+    # --------------------------------------
+    # SHOW REGISTER PAGE
+    # --------------------------------------
+
+    if request.method == "GET":
+
+        return render_template("register.html")
+
+
+    # --------------------------------------
+    # PROCESS REGISTRATION
+    # --------------------------------------
+
     if request.method == "POST":
 
         username = request.form["username"]
-
         email = request.form["email"]
-
         password = request.form["password"]
-
 
         try:
 
             conn = get_db_connection()
-
             cursor = conn.cursor()
-
 
             cursor.execute(
                 """
                 INSERT INTO users
                 (username, email, password)
-
                 VALUES (?, ?, ?)
                 """,
-
                 (
                     username,
                     email,
@@ -172,24 +150,32 @@ def register():
                 )
             )
 
-
             conn.commit()
-
             conn.close()
-
 
             return redirect(
                 url_for("login")
             )
 
-
         except sqlite3.IntegrityError:
 
             return render_template(
                 "register.html",
-
                 error="Username or Email already exists."
             )
+
+        except Exception as e:
+
+            return render_template(
+                "register.html",
+                error="Registration failed: " + str(e)
+            )
+
+    # --------------------------------------
+    # SAFETY RETURN
+    # --------------------------------------
+
+    return render_template("register.html")
 
 
 # ==========================================
@@ -205,13 +191,9 @@ def home():
             url_for("login")
         )
 
-
     return render_template(
-
         "index.html",
-
         username=session["username"]
-
     )
 
 
@@ -228,11 +210,8 @@ def venue_details(venue_name):
             url_for("login")
         )
 
-
     conn = get_db_connection()
-
     cursor = conn.cursor()
-
 
     # Get reviews for selected venue
 
@@ -243,27 +222,18 @@ def venue_details(venue_name):
         WHERE venue_name = ?
         ORDER BY id DESC
         """,
-
         (venue_name,)
     )
 
-
     reviews = cursor.fetchall()
-
 
     conn.close()
 
-
     return render_template(
-
         "venue_details.html",
-
         venue_name=venue_name,
-
         username=session["username"],
-
         reviews=reviews
-
     )
 
 
@@ -274,7 +244,9 @@ def venue_details(venue_name):
 @app.route("/add-review", methods=["POST"])
 def add_review():
 
-    # Check login
+    # --------------------------------------
+    # CHECK LOGIN
+    # --------------------------------------
 
     if "username" not in session:
 
@@ -282,26 +254,35 @@ def add_review():
             url_for("login")
         )
 
-
-    # Get form data
+    # --------------------------------------
+    # GET FORM DATA
+    # --------------------------------------
 
     venue_name = request.form["venue_name"]
-
     rating = request.form["rating"]
-
     review = request.form["review"]
-
     username = session["username"]
 
+    # --------------------------------------
+    # CONVERT RATING TO INTEGER
+    # --------------------------------------
 
-    # Convert rating to integer
+    try:
 
-    rating = int(rating)
+        rating = int(rating)
 
+    except ValueError:
 
-    # ======================================
+        return redirect(
+            url_for(
+                "venue_details",
+                venue_name=venue_name
+            )
+        )
+
+    # --------------------------------------
     # CHECK RATING
-    # ======================================
+    # --------------------------------------
 
     if rating < 1 or rating > 5:
 
@@ -312,15 +293,12 @@ def add_review():
             )
         )
 
-
-    # ======================================
+    # --------------------------------------
     # SAVE REVIEW
-    # ======================================
+    # --------------------------------------
 
     conn = get_db_connection()
-
     cursor = conn.cursor()
-
 
     cursor.execute(
         """
@@ -331,10 +309,8 @@ def add_review():
             rating,
             review
         )
-
         VALUES (?, ?, ?, ?)
         """,
-
         (
             venue_name,
             username,
@@ -343,15 +319,12 @@ def add_review():
         )
     )
 
-
     conn.commit()
-
     conn.close()
 
-
-    # ======================================
+    # --------------------------------------
     # BACK TO VENUE
-    # ======================================
+    # --------------------------------------
 
     return redirect(
         url_for(
@@ -376,12 +349,26 @@ def logout():
 
 
 # ==========================================
+# INITIALIZE DATABASE
+# ==========================================
+# Important for Render / Gunicorn
+
+init_db()
+
+
+# ==========================================
 # RUN APPLICATION
 # ==========================================
 
 if __name__ == "__main__":
 
-    init_db()
-
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
    
-    app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+    
+    
