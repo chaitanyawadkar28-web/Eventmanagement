@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        {{ venue_name }} - EventEase Maharashtra
+    </title>
+
+
+    <!-- Main CSS -->
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+
+<body>
+
+
+    <!-- ==========================================
+         NAVBAR
+    =========================================== -->
+
+    <header>
+
+        <div class="logo">
+
+            Event<span>Ease</span>
+
+        </div>
+
+
+        <nav class="nav-menu">
+
+            <a href="{{ url_for('home') }}">
+                Home
+            </a>
+
+
+            <a href="{{ url_for('home') }}">
+                Events
+            </a>
+
+
+            <a href="{{ url_for('home') }}">
+                About
+            </a>
+
+
+            <a href="{{ url_for('home') }}">
+                Contact
+            </a>
+
+
+            <a href="{{ url_for('logout') }}">
+                Logout
+            </a>
+
+        </nav>
+
+    </header>
+
+
+
+    <!-- ==========================================
+         VENUE DETAILS
+    =========================================== -->
+
+    <section class="venue-details-page">
+
+
+        <div class="venue-details-card">
+
+
+            <!-- ==================================
+                 VENUE IMAGE
+            =================================== -->
+
+            <div class="venue-details-image">
+
+                <img
+                    id="venueImage"
+                    src=""
+                    alt="{{ venue_name }}"
+                >
+
+            </div>
+
+
+
+            <!-- ==================================
+                 VENUE INFORMATION
+            =================================== -->
+
+            <div class="venue-details-info">
+
+
+                <p class="small-title">
+
+                    EVENT VENUE
+
+                </p>
+
+
+                <h1 id="venueName">
+
+                    {{ venue_name }}
+
+                </h1>
+
+
+                <p id="venueAddress">
+
+                    📍 Loading address...
+
+                </p>
+
+
+                <p id="venueEvents">
+
+                    🎉 Loading events...
+
+                </p>
+
+
+                <p id="venueGuests">
+
+                    👥 Loading capacity...
+
+                </p>
+
+
+                <p
+                    id="venueBudget"
+                    class="price">
+
+                    💰 Loading budget...
+
+                </p>
+
+
+                <p id="venuePhone">
+
+                    📞 Loading phone...
+
+                </p>
+
+
+
+                <!-- ==================================
+                     ACTION BUTTONS
+                =================================== -->
+
+                <div class="details-buttons">
+
+
+                    <!-- CALL -->
+
+                    <a
+                        href="#"
+                        id="callButton"
+                        class="btn call-btn">
+
+                        📞 Call Now
+
+                    </a>
+
+
+
+                    <!-- WHATSAPP -->
+
+                    <a
+                        href="#"
+                        id="whatsappButton"
+                        class="btn whatsapp-btn"
+                        target="_blank">
+
+                        💬 WhatsApp
+
+                    </a>
+
+
+
+                    <!-- BACK -->
+
+                    <a
+                        href="{{ url_for('home') }}"
+                        class="btn back-btn">
+
+                        ← Back to Venues
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ==========================================
+         RATING & REVIEW SECTION
+    =========================================== -->
+
+    <section class="review-section">
+
+
+        <div class="review-container">
+
+
+            <!-- ==================================
+                 WRITE REVIEW
+            =================================== -->
+
+            <div class="review-form-box">
+
+
+                <h2>
+
+                    ⭐ Rate This Venue
+
+                </h2>
+
+
+                <p class="review-subtitle">
+
+                    Share your experience with other users.
+
+                </p>
+
+
+                <form
+                    method="POST"
+                    action="{{ url_for('add_review') }}">
+
+
+                    <!-- VENUE NAME -->
+
+                    <input
+                        type="hidden"
+                        name="venue_name"
+                        value="{{ venue_name }}"
+                    >
+
+
+
+                    <!-- RATING -->
+
+                    <div class="rating-input">
+
+
+                        <label>
+
+                            Your Rating
+
+                        </label>
+
+
+                        <select
+                            name="rating"
+                            required>
+
+
+                            <option value="">
+
+                                Select Rating
+
+                            </option>
+
+
+                            <option value="5">
+
+                                ⭐⭐⭐⭐⭐ Excellent
+
+                            </option>
+
+
+                            <option value="4">
+
+                                ⭐⭐⭐⭐ Very Good
+
+                            </option>
+
+
+                            <option value="3">
+
+                                ⭐⭐⭐ Good
+
+                            </option>
+
+
+                            <option value="2">
+
+                                ⭐⭐ Average
+
+                            </option>
+
+
+                            <option value="1">
+
+                                ⭐ Poor
+
+                            </option>
+
+
+                        </select>
+
+                    </div>
+
+
+
+                    <!-- REVIEW -->
+
+                    <div class="review-input">
+
+
+                        <label>
+
+                            Your Review
+
+                        </label>
+
+
+                        <textarea
+                            name="review"
+                            rows="5"
+                            placeholder="Write your experience about this venue..."
+                            required>
+                        </textarea>
+
+                    </div>
+
+
+
+                    <!-- SUBMIT -->
+
+                    <button
+                        type="submit"
+                        class="btn review-btn">
+
+                        ⭐ Submit Review
+
+                    </button>
+
+
+                </form>
+
+
+            </div>
+
+
+
+            <!-- ==================================
+                 EXISTING REVIEWS
+            =================================== -->
+
+            <div class="reviews-list">
+
+
+                <h2>
+
+                    💬 Customer Reviews
+
+                </h2>
+
+
+                {% if reviews %}
+
+
+                    {% for review in reviews %}
+
+                        <div class="review-card">
+
+
+                            <div class="review-header">
+
+
+                                <h3>
+
+                                    👤 {{ review[2] }}
+
+                                </h3>
+
+
+                                <span class="stars">
+
+                                    {% for i in range(review[3]) %}
+
+                                        ⭐
+
+                                    {% endfor %}
+
+                                </span>
+
+
+                            </div>
+
+
+                            <p>
+
+                                {{ review[4] }}
+
+                            </p>
+
+
+                        </div>
+
+                    {% endfor %}
+
+
+                {% else %}
+
+
+                    <div class="no-reviews">
+
+                        <p>
+
+                            No reviews yet.
+
+                            Be the first to review this venue! ⭐
+
+                        </p>
+
+                    </div>
+
+
+                {% endif %}
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ==========================================
+         SELECTED VENUE
+    =========================================== -->
+
+    <script>
+
+        const selectedVenue =
+            "{{ venue_name }}";
+
+    </script>
+
+
+
+    <!-- ==========================================
+         JAVASCRIPT
+    =========================================== -->
+
+    <script
+        src="{{ url_for('static', filename='js/script.js') }}">
+    </script>
+
+
+</body>
+
+</html>

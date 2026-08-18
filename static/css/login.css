@@ -1,0 +1,315 @@
+/* ==========================================
+   EventEase Maharashtra - Login Page
+   ========================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+
+    font-family: Arial, sans-serif;
+
+    min-height: 100vh;
+
+    background: #f5f7fb;
+
+}
+
+
+/* ==========================================
+   MAIN CONTAINER
+   ========================================== */
+
+.login-container {
+
+    min-height: 100vh;
+
+    display: flex;
+
+}
+
+
+/* ==========================================
+   LEFT SIDE
+   ========================================== */
+
+.login-left {
+
+    width: 55%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #111827,
+            #1e3a8a
+        );
+
+    color: white;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    padding: 80px;
+
+}
+
+
+.brand h1 {
+
+    font-size: 45px;
+
+    margin-bottom: 10px;
+
+}
+
+
+.brand h1 span {
+
+    color: #f59e0b;
+
+}
+
+
+.brand p {
+
+    color: #dbeafe;
+
+    font-size: 18px;
+
+}
+
+
+.welcome {
+
+    margin-top: 100px;
+
+    max-width: 600px;
+
+}
+
+
+.welcome h2 {
+
+    font-size: 42px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.welcome p {
+
+    font-size: 18px;
+
+    line-height: 1.8;
+
+    color: #e5e7eb;
+
+}
+
+
+/* ==========================================
+   RIGHT SIDE
+   ========================================== */
+
+.login-right {
+
+    width: 45%;
+
+    background: white;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    padding: 40px;
+
+}
+
+
+.login-box {
+
+    width: 100%;
+
+    max-width: 420px;
+
+}
+
+
+.login-box h2 {
+
+    font-size: 32px;
+
+    color: #111827;
+
+    margin-bottom: 8px;
+
+}
+
+
+.login-subtitle {
+
+    color: #6b7280;
+
+    margin-bottom: 35px;
+
+}
+
+
+/* ==========================================
+   INPUT
+   ========================================== */
+
+.input-group {
+
+    margin-bottom: 20px;
+
+}
+
+
+.input-group label {
+
+    display: block;
+
+    font-weight: bold;
+
+    color: #374151;
+
+    margin-bottom: 8px;
+
+}
+
+
+.input-group input {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    outline: none;
+
+}
+
+
+.input-group input:focus {
+
+    border-color: #2563eb;
+
+}
+
+
+/* ==========================================
+   LOGIN BUTTON
+   ========================================== */
+
+.login-button {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #f59e0b;
+
+    color: white;
+
+    font-size: 17px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    margin-top: 10px;
+
+}
+
+
+.login-button:hover {
+
+    background: #d97706;
+
+}
+
+
+/* ==========================================
+   DEMO TEXT
+   ========================================== */
+
+.demo-text {
+
+    text-align: center;
+
+    margin-top: 20px;
+
+    font-size: 13px;
+
+    color: #9ca3af;
+
+}
+
+
+/* ==========================================
+   MOBILE
+   ========================================== */
+
+@media (max-width: 800px) {
+
+    .login-container {
+
+        flex-direction: column;
+
+    }
+
+
+    .login-left {
+
+        width: 100%;
+
+        padding: 50px 30px;
+
+        min-height: 45vh;
+
+    }
+
+
+    .welcome {
+
+        margin-top: 40px;
+
+    }
+
+
+    .welcome h2 {
+
+        font-size: 30px;
+
+    }
+
+
+    .login-right {
+
+        width: 100%;
+
+        padding: 40px 25px;
+
+    }
+
+}
