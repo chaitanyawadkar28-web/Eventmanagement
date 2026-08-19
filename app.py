@@ -1,4 +1,4 @@
- flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import time
 
@@ -19,15 +19,10 @@ def get_db_connection():
 
     conn = sqlite3.connect(
         "eventease.db",
-        timeout=30,
-        check_same_thread=False
+        timeout=30
     )
 
-    # Wait up to 30 seconds if database is busy
     conn.execute("PRAGMA busy_timeout = 30000")
-
-    # Helps reduce SQLite locking problems
-    conn.execute("PRAGMA journal_mode = WAL")
 
     return conn
 
@@ -40,48 +35,34 @@ def init_db():
 
     conn = get_db_connection()
 
-    cursor = conn.cursor()
+    try:
 
-    # ======================================
-    # USERS TABLE
-    # ======================================
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        """)
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                venue_name TEXT NOT NULL,
+                username TEXT NOT NULL,
+                rating INTEGER NOT NULL,
+                review TEXT NOT NULL
+            )
+        """)
 
-            username TEXT UNIQUE NOT NULL,
+        conn.commit()
 
-            email TEXT UNIQUE NOT NULL,
+    finally:
 
-            password TEXT NOT NULL
-
-        )
-    """)
-
-    # ======================================
-    # REVIEWS TABLE
-    # ======================================
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS reviews (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            venue_name TEXT NOT NULL,
-
-            username TEXT NOT NULL,
-
-            rating INTEGER NOT NULL,
-
-            review TEXT NOT NULL
-
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+        conn.close()
 
 
 # ==========================================
@@ -96,6 +77,13 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
+        if not username or not password:
+
+            return render_template(
+                "login.html",
+                error="Please enter username and password."
+            )
+
         conn = None
 
         try:
@@ -106,7 +94,7 @@ def login():
 
             cursor.execute(
                 """
-                SELECT *
+                SELECT id, username, email, password
                 FROM users
                 WHERE username = ?
                 AND password = ?
@@ -118,7 +106,7 @@ def login():
 
             if user:
 
-                session["username"] = username
+                session["username"] = user[1]
 
                 return redirect(url_for("home"))
 
@@ -127,9 +115,17 @@ def login():
                 error="Invalid username or password."
             )
 
+        except sqlite3.Error as e:
+
+            return render_template(
+                "login.html",
+                error="Login failed: " + str(e)
+            )
+
         finally:
 
             if conn:
+
                 conn.close()
 
     return render_template("login.html")
@@ -142,18 +138,10 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
-    # ======================================
-    # SHOW REGISTER PAGE
-    # ======================================
-
     if request.method == "GET":
 
         return render_template("register.html")
 
-
-    # ======================================
-    # GET FORM DATA
-    # ======================================
 
     username = request.form.get("username", "").strip()
 
@@ -163,7 +151,7 @@ def register():
 
 
     # ======================================
-    # BASIC VALIDATION
+    # VALIDATION
     # ======================================
 
     if not username or not email or not password:
@@ -174,65 +162,92 @@ def register():
         )
 
 
-    conn = None
-
-
-    # ======================================
-    # SAVE USER
-    # ======================================
-
-    try:
-
-        conn = get_db_connection()
-
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            INSERT INTO users
-            (username, email, password)
-            VALUES (?, ?, ?)
-            """,
-            (
-                username,
-                email,
-                password
-            )
-        )
-
-        conn.commit()
-
-        return redirect(url_for("login"))
-
-
-    except sqlite3.IntegrityError:
+    if len(username) < 3:
 
         return render_template(
             "register.html",
-            error="Username or Email already exists."
+            error="Username must be at least 3 characters."
         )
 
 
-    except sqlite3.OperationalError as e:
+    if len(password) < 6:
 
-        if "locked" in str(e).lower():
+        return render_template(
+            "register.html",
+            error="Password must be at least 6 characters."
+        )
+
+
+    # ======================================
+    # INSERT USER
+    # ======================================
+
+    for attempt in range(3):
+
+        conn = None
+
+        try:
+
+            conn = get_db_connection()
+
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                INSERT INTO users
+                (
+                    username,
+                    email,
+                    password
+                )
+                VALUES (?, ?, ?)
+                """,
+                (
+                    username,
+                    email,
+                    password
+                )
+            )
+
+            conn.commit()
+
+            return redirect(url_for("login"))
+
+
+        except sqlite3.IntegrityError:
 
             return render_template(
                 "register.html",
-                error="Database is busy. Please wait a few seconds and try again."
+                error="Username or Email already exists."
             )
 
-        return render_template(
-            "register.html",
-            error="Registration failed: " + str(e)
-        )
+
+        except sqlite3.OperationalError as e:
+
+            if "locked" in str(e).lower():
+
+                if attempt < 2:
+
+                    time.sleep(2)
+
+                    continue
+
+                return render_template(
+                    "register.html",
+                    error="Database is busy. Please try again."
+                )
+
+            return render_template(
+                "register.html",
+                error="Registration failed: " + str(e)
+            )
 
 
-    finally:
+        finally:
 
-        if conn:
+            if conn:
 
-            conn.close()
+                conn.close()
 
 
 # ==========================================
@@ -244,9 +259,7 @@ def home():
 
     if "username" not in session:
 
-        return redirect(
-            url_for("login")
-        )
+        return redirect(url_for("login"))
 
     return render_template(
         "index.html",
@@ -255,7 +268,7 @@ def home():
 
 
 # ==========================================
-# VENUE DETAILS PAGE
+# VENUE DETAILS
 # ==========================================
 
 @app.route("/venue/<venue_name>")
@@ -263,9 +276,7 @@ def venue_details(venue_name):
 
     if "username" not in session:
 
-        return redirect(
-            url_for("login")
-        )
+        return redirect(url_for("login"))
 
     conn = None
 
@@ -277,7 +288,12 @@ def venue_details(venue_name):
 
         cursor.execute(
             """
-            SELECT *
+            SELECT
+                id,
+                venue_name,
+                username,
+                rating,
+                review
             FROM reviews
             WHERE venue_name = ?
             ORDER BY id DESC
@@ -308,39 +324,38 @@ def venue_details(venue_name):
 @app.route("/add-review", methods=["POST"])
 def add_review():
 
-    # ======================================
-    # CHECK LOGIN
-    # ======================================
-
     if "username" not in session:
 
-        return redirect(
-            url_for("login")
-        )
+        return redirect(url_for("login"))
 
 
-    # ======================================
-    # GET FORM DATA
-    # ======================================
+    venue_name = request.form.get(
+        "venue_name",
+        ""
+    ).strip()
 
-    venue_name = request.form.get("venue_name", "")
+    rating = request.form.get(
+        "rating",
+        ""
+    )
 
-    rating = request.form.get("rating", "")
-
-    review = request.form.get("review", "").strip()
+    review = request.form.get(
+        "review",
+        ""
+    ).strip()
 
     username = session["username"]
 
 
     # ======================================
-    # CONVERT RATING
+    # RATING VALIDATION
     # ======================================
 
     try:
 
         rating = int(rating)
 
-    except ValueError:
+    except (ValueError, TypeError):
 
         return redirect(
             url_for(
@@ -350,11 +365,17 @@ def add_review():
         )
 
 
-    # ======================================
-    # CHECK RATING
-    # ======================================
-
     if rating < 1 or rating > 5:
+
+        return redirect(
+            url_for(
+                "venue_details",
+                venue_name=venue_name
+            )
+        )
+
+
+    if not venue_name or not review:
 
         return redirect(
             url_for(
@@ -404,10 +425,6 @@ def add_review():
             conn.close()
 
 
-    # ======================================
-    # BACK TO VENUE
-    # ======================================
-
     return redirect(
         url_for(
             "venue_details",
@@ -425,25 +442,18 @@ def logout():
 
     session.clear()
 
-    return redirect(
-        url_for("login")
-    )
+    return redirect(url_for("login"))
 
 
 # ==========================================
-# INITIALIZE DATABASE
+# DATABASE INITIALIZATION
 # ==========================================
-
-# IMPORTANT:
-# Gunicorn/Render imports this file,
-# so database initialization must happen
-# outside __main__.
 
 init_db()
 
 
 # ==========================================
-# RUN APPLICATION LOCALLY
+# RUN APPLICATION
 # ==========================================
 
 if __name__ == "__main__":
